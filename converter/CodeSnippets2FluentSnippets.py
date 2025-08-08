@@ -1,17 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
 import json
 import base64
 import hashlib
 from datetime import datetime
-import ipywidgets as widgets
-from IPython.display import display
-
-# --- Helper Functions ---
 
 def detect_snippet_type_from_scope(scope):
     scope = (scope or "").lower()
@@ -23,12 +16,10 @@ def detect_snippet_type_from_scope(scope):
         return "js"
     return "php"
 
-
 def prepare_code(code_str):
     encoded = base64.b64encode(code_str.encode("utf-8")).decode("utf-8")
     code_hash = hashlib.md5(code_str.encode("utf-8")).hexdigest()
     return encoded, code_hash
-
 
 def normalize_tags(raw_tags):
     if isinstance(raw_tags, list):
@@ -38,13 +29,11 @@ def normalize_tags(raw_tags):
         return [t for t in parts if t]
     return []
 
-
 def clean_description(raw_desc):
     desc = (raw_desc or "").strip()
     if desc.lower().startswith("<p>") and desc.lower().endswith("</p>"):
         desc = desc[3:-4].strip()
     return desc
-
 
 def convert_code_snippets(raw):
     output = {"file_type":"fluent_code_snippets","version":"10.51","snippets":[]}
@@ -76,35 +65,16 @@ def convert_code_snippets(raw):
     output["snippets_count"]=len(output["snippets"])
     return output
 
-# --- Widgets & Display ---
-uploader = widgets.FileUpload(accept='.json', multiple=False)
-filename_input = widgets.Text(value="converted.fluent-snippets.json", description="Output file:")
-convert_button = widgets.Button(description="Convert & Save", button_style="success")
-
-ui = widgets.VBox([uploader, filename_input, convert_button])
-display(ui)
-
-def on_convert_clicked(b):
-    uploaded = uploader.value
-    if not uploaded:
-        print("❌ No file uploaded.")
-        return
-    content = list(uploaded.values())[0]["content"]
-    raw_data = json.loads(content.decode('utf-8'))
-    fluent_data = convert_code_snippets(raw_data)
-    out_file = filename_input.value.strip()
-    try:
-        with open(out_file, 'w', encoding='utf-8') as f:
-            json.dump(fluent_data, f, indent=4)
-        print(f"✅ Successfully saved to '{out_file}'.")
-    except Exception as e:
-        print(f"❌ Error saving file: {e}")
-
-convert_button.on_click(on_convert_clicked)
-
-
-# In[ ]:
-
-
-
-
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 3:
+        print("Usage: python convert_snippets.py input.json output.fluent-snippets.json")
+        sys.exit(1)
+    input_file = sys.argv[1]
+    output_file = sys.argv[2]
+    with open(input_file, "r", encoding="utf-8") as f:
+        raw = json.load(f)
+    fluent_data = convert_code_snippets(raw)
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(fluent_data, f, indent=4)
+    print(f"✅ Saved to {output_file}")
